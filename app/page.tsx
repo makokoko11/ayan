@@ -1,255 +1,231 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function GamePage() {
-  const [click, setClick] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isFlipped, setIsFlipped] = useState(false);
+// --- あーやん専用 爆速ランナー育成アプリ 完全版 ---
+
+export default function AayanGamePage() {
+  const [selectedCat, setSelectedCat] = useState<string | null>(null);
+  const [selectedName, setSelectedName] = useState("");
+  const [clickCount, setClickCount] = useState(0);
   const [isJumping, setIsJumping] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
   const [showMsg, setShowMsg] = useState(false);
   const [msgText, setMsgText] = useState("");
-  const [min, setMin] = useState("");
-  const [sec, setSec] = useState("");
-  
-  // --- キャラクター選択用 ---
-  const characters = ["🐱", "🐶", "🐰", "🦊", "🐯", "🦁", "🐨", "🐼"];
-  const [selectedChar, setSelectedChar] = useState("🐱");
 
-  const run = () => {
-    if (isAnimating) return;
+  // ベストタイム 10個
+  const [bestTimes] = useState([
+    "2:41", "2:45", "2:50", "2:55", "3:00", "3:05", "3:10", "3:15", "3:20", "3:25"
+  ]);
 
-    const currentMin = min || "0";
-    const currentSec = sec || "0";
-    
-    setMsgText(`${currentMin}分${currentSec}秒！${selectedChar}が喜んでるよ！`);
-    setShowMsg(true);
-    
-    setIsAnimating(true);
-    setIsJumping(true);
-    
-    setTimeout(() => {
-      setIsJumping(false);
-    }, 300);
+  // トレーニング日誌（今日から10日前まで）
+  const [trainingLogs] = useState(
+    Array.from({ length: 10 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      return {
+        date: `${d.getMonth() + 1}/${d.getDate()}`,
+        grip: "",
+        dumbbell: ""
+      };
+    })
+  );
 
-    const nextClick = click + 1;
-    setClick(nextClick);
+  // 送っていただいた画像のネコたちをイメージしたリスト
+  const cats = [
+    { id: 'shiro', emoji: '🐱', name: 'しろまる' },
+    { id: 'kuro', emoji: '🐈‍⬛', name: 'くろすけ' },
+    { id: 'mike', emoji: '🐈', name: 'みけラン' },
+    { id: 'hachi', emoji: '🐾', name: 'ハチワレくん' },
+    { id: 'tora', emoji: '🐯', name: 'とらまる' },
+    { id: 'fuwa', emoji: '☁️', name: 'ふわにゃん' },
+    { id: 'shyamu', emoji: '🕶️', name: 'シャムラン' },
+    { id: 'speed', emoji: '⚡', name: 'スピードにゃん' },
+    { id: 'mochi', emoji: '🍡', name: 'もちにゃん' },
+    { id: 'yozora', emoji: '🌌', name: '夜空にゃん' }
+  ];
 
-    if (nextClick >= 3) {
-      setTimeout(() => {
-        setIsFlipped(true);
-        setMsgText("最高のごほうびだね！✨");
-      }, 300);
-
-      setTimeout(() => {
-        setIsFlipped(false);
-        setClick(0);
-        setIsAnimating(false);
-        setShowMsg(false);
-      }, 1500);
-    } else {
-      setTimeout(() => {
-        setIsAnimating(false);
-        setShowMsg(false);
-      }, 1000);
-    }
+  // SE再生の仕組み（実際の音声ファイルを配置すれば鳴ります）
+  const playSound = (type: 'btn' | 'jump') => {
+    console.log(`${type} sound played`);
+    // const audio = new Audio(`/sounds/${type}.mp3`);
+    // audio.play().catch(() => {}); 
   };
+
+  const handleRecord = () => {
+    if (!selectedCat) return;
+    playSound('jump');
+    setMsgText(`家のまわり2周、ナイスラン！`);
+    setShowMsg(true);
+    setIsJumping(true);
+    setTimeout(() => setIsJumping(false), 300);
+
+    setClickCount(prev => prev + 1);
+    if (clickCount >= 2) {
+      setIsFlipped(true);
+      setMsgText("3分10秒切りが見えてきたにゃ！✨");
+      setTimeout(() => { setIsFlipped(false); setClickCount(0); }, 1500);
+    }
+    setTimeout(() => setShowMsg(false), 2000);
+  };
+
+  // キャラ選択画面
+  if (!selectedCat) {
+    return (
+      <div style={{
+        width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', backgroundColor: '#3aa655',
+        fontFamily: '"M PLUS Rounded 1c", sans-serif', color: 'white', padding: '20px'
+      }}>
+        <h1 style={{ fontSize: '28px', marginBottom: '10px', textShadow: '2px 2px 0px #000' }}>あーやん、誰と走る？</h1>
+        <p style={{ marginBottom: '30px' }}>目指せ800m 3分10秒以内！！！</p>
+        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '800px' }}>
+          {cats.map(cat => (
+            <div key={cat.id} onClick={() => { setSelectedCat(cat.emoji); setSelectedName(cat.name); }} 
+              style={{ padding: '15px', background: 'rgba(255,255,255,0.9)', borderRadius: '15px', cursor: 'pointer', textAlign: 'center', width: '100px', transition: 'transform 0.2s' }}>
+              <div style={{ fontSize: '50px' }}>{cat.emoji}</div>
+              <div style={{ color: '#333', fontSize: '12px', fontWeight: 'bold' }}>{cat.name}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main style={{
-      width: '100vw',
-      height: '100vh',
-      margin: 0,
-      padding: 0,
-      fontFamily: "'Poppins', sans-serif",
-      overflow: 'hidden',
-      color: 'white',
-      backgroundColor: '#222',
-      position: 'relative',
-      WebkitFontSmoothing: 'antialiased',
-      background: 'radial-gradient(circle at 50% 100%, rgba(58, 166, 85, 0.5) 0%, rgba(30, 80, 40, 0.9) 100%)',
+      width: '100vw', height: '100vh', margin: 0, overflow: 'hidden',
+      fontFamily: '"M PLUS Rounded 1c", sans-serif', color: 'white',
+      background: 'linear-gradient(to bottom, #87CEEB 0%, #4CAF50 100%)', // 空と芝生
+      position: 'relative'
     }}>
-      {/* 背景トラック */}
+      
+      {/* 陸上競技場風トラック */}
       <div style={{
-        position: 'absolute',
-        top: '30%',
-        left: '50%',
-        width: '200%',
-        height: '150%',
-        border: '12px solid rgba(255, 255, 255, 0.15)',
-        borderRadius: '50%',
-        transform: 'translateX(-50%) rotateX(60deg)',
-        boxShadow: '0 0 20px rgba(255, 255, 255, 0.1) inset',
+        position: 'absolute', bottom: '-10%', left: '50%', width: '180%', height: '120%',
+        border: '60px solid #d35400', borderRadius: '50%', transform: 'translateX(-50%) rotateX(75deg)',
+        boxShadow: '0 0 0 10px white, 0 0 0 20px #d35400, 0 20px 50px rgba(0,0,0,0.5)', zIndex: 1
       }} />
 
-      {/* HUD Header */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        padding: '20px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        zIndex: 100,
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ backgroundColor: '#FF4D4D', color: 'white', fontWeight: 800, fontSize: '12px', padding: '4px 8px', borderRadius: '6px', textTransform: 'uppercase' }}>Lv. 5</div>
-          <div style={{ width: '140px', height: '8px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '4px', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: '75%', background: 'linear-gradient(90deg, #00C853 0%, #00E676 100%)' }} />
-          </div>
-        </div>
-        <div style={{ textAlign: 'right', background: 'rgba(255, 255, 255, 0.1)', padding: '10px 15px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.2)', backdropFilter: 'blur(10px)' }}>
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>BEST TIME</div>
-          <div style={{ fontSize: '24px', fontWeight: 800 }}>2<span style={{ fontSize: '12px' }}>m</span> 41<span style={{ fontSize: '12px' }}>s</span></div>
-        </div>
+      {/* ヘッダー：タイトルと目標 */}
+      <div style={{ position: 'absolute', top: '15px', width: '100%', textAlign: 'center', zIndex: 10 }}>
+        <h1 style={{ fontSize: '22px', textShadow: '2px 2px 4px rgba(0,0,0,0.5)', margin: 0 }}>
+          🏃‍♀️ あーやん 爆速ランナーへの道 🏃‍♀️
+          <span style={{ fontSize: '18px', color: '#FFEB3B', marginLeft: '15px', background: 'rgba(0,0,0,0.3)', padding: '4px 12px', borderRadius: '10px' }}>
+            目指せ800m 3分10秒以内！！！
+          </span>
+        </h1>
       </div>
 
-      {/* Character Selector (追加された部分) */}
+      {/* 左側：筋トレ日誌（10日分） */}
       <div style={{
-        position: 'absolute',
-        top: '100px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        display: 'flex',
-        gap: '10px',
-        padding: '10px',
-        background: 'rgba(255, 255, 255, 0.05)',
-        borderRadius: '20px',
-        backdropFilter: 'blur(5px)',
-        zIndex: 110,
-        maxWidth: '90%',
-        overflowX: 'auto',
+        position: 'absolute', left: '20px', top: '80px', width: '240px', maxHeight: '60%',
+        background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(15px)', borderRadius: '24px',
+        padding: '15px', overflowY: 'auto', zIndex: 10, border: '2px solid rgba(255,255,255,0.3)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
       }}>
-        {characters.map((char) => (
-          <div 
-            key={char}
-            onClick={() => setSelectedChar(char)}
-            style={{
-              fontSize: '30px',
-              padding: '10px',
-              cursor: 'pointer',
-              borderRadius: '15px',
-              backgroundColor: selectedChar === char ? 'rgba(255,255,255,0.2)' : 'transparent',
-              transition: 'background 0.2s',
-              flexShrink: 0,
-            }}
-          >
-            {char}
+        <div style={{ fontWeight: 'bold', marginBottom: '10px', textAlign: 'center', fontSize: '14px', color: '#FFF' }}>🗓️ 筋トレ日誌</div>
+        <table style={{ width: '100%', fontSize: '12px' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.3)' }}>
+              <th style={{ padding: '5px' }}>日付</th>
+              <th>握力</th>
+              <th>ダンベル</th>
+            </tr>
+          </thead>
+          <tbody>
+            {trainingLogs.map((log, i) => (
+              <tr key={i}>
+                <td style={{ padding: '6px 0', textAlign: 'center' }}>{log.date}</td>
+                <td><input type="number" style={{ width: '45px', border: 'none', borderRadius: '6px', textAlign: 'center', padding: '2px' }} placeholder="kg" /></td>
+                <td><input type="number" style={{ width: '45px', border: 'none', borderRadius: '6px', textAlign: 'center', padding: '2px' }} placeholder="回" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 右側：ベストタイム（10個） */}
+      <div style={{
+        position: 'absolute', right: '20px', top: '80px', width: '180px',
+        background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(5px)', borderRadius: '24px', padding: '15px', zIndex: 10, border: '1px solid rgba(255,255,255,0.1)'
+      }}>
+        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#FFD700', marginBottom: '10px', textAlign: 'center', letterSpacing: '1px' }}>🏆 BEST TIMES</div>
+        {bestTimes.map((time, i) => (
+          <div key={i} style={{ fontSize: '14px', display: 'flex', justifyContent: 'space-between', marginBottom: '6px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <span style={{ color: 'rgba(255,255,255,0.6)' }}>{i + 1}位</span>
+            <span style={{ fontWeight: 'bold' }}>{time}</span>
           </div>
         ))}
       </div>
 
-      {/* Main Character Display */}
-      <div style={{
-        position: 'absolute',
-        bottom: '35%',
-        left: '50%',
-        transform: `translateX(-50%) translateY(${isJumping ? '-50px' : '0'})`,
-        transition: 'transform 0.3s ease-out',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        zIndex: 10,
-      }}>
-        <div style={{
-          fontSize: '120px',
-          lineHeight: 1,
-          filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))',
-          transform: isFlipped ? 'rotate(180deg)' : 'rotate(0)',
-          transition: 'transform 0.3s',
-        }}>{selectedChar}</div>
-        <div style={{
-          width: '80px',
-          height: '20px',
-          background: 'rgba(0, 0, 0, 0.4)',
-          borderRadius: '50%',
-          filter: 'blur(5px)',
-          marginTop: '-10px',
-          transform: isJumping ? 'scale(0.7)' : 'scale(1)',
-          opacity: isJumping ? 0.5 : 1,
-          transition: 'transform 0.3s, opacity 0.3s',
-        }} />
-      </div>
-
-      {/* Message */}
-      <div style={{
-        position: 'absolute',
-        top: '45%',
-        left: '50%',
-        transform: 'translate(-50%, -100%)',
-        width: '80%',
-        textAlign: 'center',
-        opacity: showMsg ? 1 : 0,
-        transition: 'opacity 0.3s, transform 0.3s',
-        zIndex: 5,
-      }}>
-        <div style={{
-          fontSize: '28px',
-          fontWeight: 800,
-          background: 'linear-gradient(to bottom, #fff, #eee)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          textShadow: '0 4px 10px rgba(0,0,0,0.5)',
-        }}>{msgText}</div>
-      </div>
-
-      {/* Action Panel */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        width: '100%',
-        background: 'rgba(255, 255, 255, 0.1)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-        backdropFilter: 'blur(20px)',
-        borderRadius: '24px 24px 0 0',
-        padding: '25px',
-        boxSizing: 'border-box',
-        zIndex: 100,
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', background: 'rgba(0, 0, 0, 0.2)', padding: '5px 15px', borderRadius: '12px' }}>
-            <input 
-              type="number" 
-              value={min}
-              onChange={(e) => setMin(e.target.value)}
-              placeholder="00" 
-              style={{ width: '70px', background: 'transparent', border: 'none', color: 'white', fontSize: '40px', fontWeight: 800, textAlign: 'center', outline: 'none' }}
-            />
-            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>m</span>
-          </div>
-          <span style={{ fontSize: '30px', fontWeight: 800, color: 'rgba(255,255,255,0.5)' }}>:</span>
-          <div style={{ display: 'flex', alignItems: 'baseline', background: 'rgba(0, 0, 0, 0.2)', padding: '5px 15px', borderRadius: '12px' }}>
-            <input 
-              type="number" 
-              value={sec}
-              onChange={(e) => setSec(e.target.value)}
-              placeholder="00" 
-              style={{ width: '70px', background: 'transparent', border: 'none', color: 'white', fontSize: '40px', fontWeight: 800, textAlign: 'center', outline: 'none' }}
-            />
-            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>s</span>
+      {/* 中央上部：特大レベル & HPゲージ */}
+      <div style={{ position: 'absolute', top: '50px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center', zIndex: 10 }}>
+        <div style={{ fontSize: '80px', fontWeight: '900', color: '#FFD700', textShadow: '0 0 20px rgba(255,215,0,0.5)', lineHeight: 1 }}>Lv. 15</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '5px' }}>
+          <span style={{ fontWeight: 'bold', color: '#ff4d4d', fontSize: '18px' }}>HP</span>
+          <div style={{
+            width: '350px', height: '28px', background: 'rgba(0,0,0,0.5)', borderRadius: '14px',
+            padding: '4px', border: '3px solid #FFF', position: 'relative', overflow: 'hidden', boxShadow: '0 0 15px rgba(255,77,77,0.3)'
+          }}>
+            <div style={{
+              width: '85%', height: '100%', borderRadius: '10px',
+              background: 'linear-gradient(90deg, #ff4d4d 0%, #ff8a80 100%)',
+              boxShadow: 'inset 0 0 10px rgba(255,255,255,0.5)'
+            }} />
           </div>
         </div>
-        <button 
-          onClick={run}
-          style={{
-            width: '100%',
-            padding: '18px',
-            border: 'none',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, #FF6B6B 0%, #FF4D4D 100%)',
-            color: 'white',
-            fontSize: '18px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            boxShadow: '0 4px 15px rgba(255, 77, 77, 0.4)',
-          }}
-        >
-          RECORD TIME
-        </button>
+      </div>
+
+      {/* メインキャラクター */}
+      <div style={{
+        position: 'absolute', bottom: '32%', left: '50%', transform: `translateX(-50%) translateY(${isJumping ? '-100px' : '0'})`,
+        transition: 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)', zIndex: 5, textAlign: 'center'
+      }}>
+        <div style={{
+          fontSize: '180px', filter: 'drop-shadow(0 20px 10px rgba(0,0,0,0.3))',
+          transform: isFlipped ? 'rotate(180deg)' : 'none', transition: 'transform 0.5s'
+        }}>{selectedCat}</div>
+        <div style={{
+          width: '140px', height: '25px', background: 'rgba(0,0,0,0.2)', borderRadius: '50%',
+          filter: 'blur(8px)', margin: '-20px auto 0', transform: isJumping ? 'scale(0.6)' : 'scale(1)', transition: '0.25s'
+        }} />
+        
+        {/* フキダシメッセージ */}
+        <div style={{
+          position: 'absolute', top: '-40px', left: '100%', whiteSpace: 'nowrap',
+          opacity: showMsg ? 1 : 0, transform: `scale(${showMsg ? 1 : 0.8})`, transition: '0.3s',
+          background: 'white', color: '#333', padding: '12px 24px', borderRadius: '25px',
+          fontWeight: 'bold', boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+        }}>
+          {msgText}
+        </div>
+      </div>
+
+      {/* 下部パネル：タイム入力 */}
+      <div style={{
+        position: 'absolute', bottom: 0, width: '100%', background: 'rgba(255,255,255,0.95)',
+        padding: '25px', borderTop: '8px solid #FF4D4D', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', gap: '15px', zIndex: 100, boxShadow: '0 -10px 30px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ color: '#666', fontWeight: 'bold', fontSize: '18px' }}>🏁 家のまわり2周 タイムアタック記録 🏁</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', background: '#f0f0f0', padding: '10px 20px', borderRadius: '15px' }}>
+            <input type="number" placeholder="0" style={{ width: '60px', fontSize: '32px', background: 'transparent', border: 'none', textAlign: 'center', fontWeight: 'bold', outline: 'none' }} />
+            <span style={{ fontSize: '20px', marginLeft: '5px', color: '#333' }}>分</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', background: '#f0f0f0', padding: '10px 20px', borderRadius: '15px' }}>
+            <input type="number" placeholder="00" style={{ width: '80px', fontSize: '32px', background: 'transparent', border: 'none', textAlign: 'center', fontWeight: 'bold', outline: 'none' }} />
+            <span style={{ fontSize: '20px', marginLeft: '5px', color: '#333' }}>秒</span>
+          </div>
+          <button onClick={handleRecord} style={{
+            padding: '15px 40px', background: 'linear-gradient(135deg, #FF6B6B 0%, #FF4D4D 100%)',
+            color: 'white', border: 'none', borderRadius: '40px', fontSize: '22px', fontWeight: 'bold',
+            cursor: 'pointer', boxShadow: '0 6px 0 #c24d4d', transition: '0.1s'
+          }} onMouseDown={(e) => (e.currentTarget.style.transform = 'translateY(4px)', e.currentTarget.style.boxShadow = '0 2px 0 #c24d4d')}
+             onMouseUp={(e) => (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 6px 0 #c24d4d')}>
+            記録するにゃ！
+          </button>
+        </div>
       </div>
     </main>
   );
