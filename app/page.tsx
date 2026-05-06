@@ -2,34 +2,42 @@
 
 import React, { useState } from 'react';
 
-// かわいい丸文字フォント
 const fontLink = "https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@900&display=swap";
 
-export default function AayanFinalApp() {
+export default function AayanTrackApp() {
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
   
-  // 今日の入力用
-  const [inGrip, setInGrip] = useState("");
+  // 入力用ステート
+  const [inMin, setInMin] = useState("");
+  const [inSec, setInSec] = useState("");
   const [inDumb, setInDumb] = useState("");
+  const [inGrip, setInGrip] = useState("");
 
-  // 10日分の記録（見るだけ）
+  // 過去10日分のデータ（仮の初期値）
   const [logs] = useState(Array.from({ length: 10 }, (_, i) => ({
     date: `5/${10 - i}`,
-    grip: (21 + Math.random() * 4).toFixed(1),
-    dumb: 15 + i * 2
+    grip: (22 + Math.random() * 2).toFixed(1),
+    dumb: 20 + i
   })));
 
-  // 自己ベスト
-  const bestTimes = ["3:08", "3:11", "3:15", "3:18", "3:20", "3:22", "3:25", "3:28", "3:30", "3:32"];
+  // --- 入力値と過去ログを合わせた「現在のリアルタイム記録」を計算 ---
+  const currentMaxGrip = Math.max(...logs.map(l => Number(l.grip)), Number(inGrip) || 0);
+  const currentTotalDumb = logs.reduce((sum, l) => sum + Number(l.dumb), 0) + (Number(inDumb) || 0);
+
+  // 音楽再生用の関数
+  const playSE = () => {
+    const audio = new Audio('/se.mp3'); // publicフォルダのse.mp3
+    audio.play().catch(() => console.log("SE再生エラー：ファイルを確認してね"));
+  };
 
   if (!selectedCat) {
     return (
       <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#ff9ebb', fontFamily: '"Zen Maru Gothic", sans-serif' }}>
         <link href={fontLink} rel="stylesheet" />
-        <h1 style={{ color: 'white', fontSize: '24px', marginBottom: '30px', textAlign: 'center' }}>あーやん！<br/>一緒に走るネコを選んで！</h1>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
+        <h1 style={{ color: 'white' }}>相棒を選んでね！</h1>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginTop: '20px' }}>
           {['🐱', '🐈‍⬛', '🐈', '🐾', '🐯', '🦁'].map(c => (
-            <button key={c} onClick={() => setSelectedCat(c)} style={{ fontSize: '40px', background: 'white', border: 'none', borderRadius: '20px', padding: '15px', boxShadow: '0 5px 0 #e67eac' }}>{c}</button>
+            <button key={c} onClick={() => setSelectedCat(c)} style={{ fontSize: '40px', background: 'white', border: 'none', borderRadius: '20px', padding: '15px' }}>{c}</button>
           ))}
         </div>
       </div>
@@ -39,98 +47,86 @@ export default function AayanFinalApp() {
   return (
     <main style={{
       width: '100vw', height: '100vh', overflowX: 'hidden', overflowY: 'auto',
-      fontFamily: '"Zen Maru Gothic", sans-serif', color: '#333',
-      backgroundImage: 'url("/bg-track.png")', // ダウンロードした画像
+      fontFamily: '"Zen Maru Gothic", sans-serif',
+      backgroundImage: 'url("/bg-track.png")',
       backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed',
-      paddingBottom: '220px'
+      paddingBottom: '240px'
     }}>
       <link href={fontLink} rel="stylesheet" />
 
-      {/* 1. タイトル（最上部） */}
-      <div style={{ width: '100%', padding: '15px 10px', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(5px)', borderBottom: '4px solid #ff4d8d', textAlign: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
+      {/* タイトル */}
+      <div style={{ width: '100%', padding: '15px', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(10px)', borderBottom: '4px solid #ff4d8d', textAlign: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
         <h1 style={{ fontSize: '18px', margin: 0, color: '#ff4d8d' }}>🏃‍♀️ あーやん 爆速ランナーへの道 🏃‍♀️</h1>
-        <div style={{ fontSize: '15px', fontWeight: '900', color: '#333' }}>目指せ800m 3分10秒以内！！！</div>
       </div>
 
-      <div style={{ padding: '0 15px', position: 'relative', zIndex: 1 }}>
-        
-        {/* 2. レベル表示（背景なし・透過） */}
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <div style={{ fontSize: '65px', fontWeight: '900', color: '#ffcc00', textShadow: '3px 3px 0 #333, -2px -2px 0 #333' }}>Lv. 15</div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '-10px' }}>
-            <span style={{ fontWeight: '900', color: '#ff4d4d', fontSize: '18px', textShadow: '1px 1px 2px #fff' }}>体力</span>
-            <div style={{ width: '180px', height: '20px', background: 'rgba(0,0,0,0.5)', borderRadius: '10px', border: '2px solid #fff', overflow: 'hidden' }}>
-              <div style={{ width: '85%', height: '100%', background: 'linear-gradient(90deg, #ff4d4d, #ff8080)' }} />
-            </div>
+      <div style={{ padding: '0 15px' }}>
+        {/* ステータス（ここが入力に合わせて動きます） */}
+        <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+          <div style={{ flex: 1, background: 'rgba(255,255,255,0.8)', padding: '10px', borderRadius: '15px', textAlign: 'center', border: '2px solid #ff4d8d' }}>
+            <div style={{ fontSize: '10px' }}>最高握力</div>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ff4d8d' }}>{currentMaxGrip}kg</div>
+          </div>
+          <div style={{ flex: 1, background: 'rgba(255,255,255,0.8)', padding: '10px', borderRadius: '15px', textAlign: 'center', border: '2px solid #4caf50' }}>
+            <div style={{ fontSize: '10px' }}>ダンベル合計</div>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#4caf50' }}>{currentTotalDumb}回</div>
           </div>
         </div>
 
-        {/* 3. キャラクター（背景なし・直接イラストの上に浮く） */}
-        <div style={{ textAlign: 'center', margin: '10px 0' }}>
-          <div style={{ fontSize: '140px', filter: 'drop-shadow(0 10px 10px rgba(0,0,0,0.4))' }} className="character-jump">{selectedCat}</div>
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <div style={{ fontSize: '120px' }} className="jump">{selectedCat}</div>
         </div>
 
-        {/* 4. 10日間の記録履歴（半透明で背景を活かす） */}
-        <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: '20px', padding: '15px', border: '1px solid rgba(255,255,255,0.5)', backdropFilter: 'blur(4px)', marginBottom: '15px' }}>
-          <div style={{ textAlign: 'center', fontWeight: '900', fontSize: '14px', marginBottom: '8px' }}>🗓️ 10日間のきろく（見るだけ）</div>
-          <div style={{ maxHeight: '130px', overflowY: 'auto' }}>
-            <table style={{ width: '100%', fontSize: '13px' }}>
-              <thead style={{ background: 'rgba(0,0,0,0.05)', position: 'sticky', top: 0 }}>
-                <tr><th>日付</th><th>握力</th><th>回数</th></tr>
-              </thead>
+        {/* 過去ログ */}
+        <div style={{ background: 'rgba(255,255,255,0.8)', borderRadius: '20px', padding: '15px', marginTop: '10px' }}>
+          <div style={{ textAlign: 'center', fontSize: '13px', fontWeight: 'bold', marginBottom: '5px' }}>🗓️ 過去10日のきろく</div>
+          <div style={{ maxHeight: '120px', overflowY: 'auto', fontSize: '12px' }}>
+            <table style={{ width: '100%' }}>
               <tbody>
                 {logs.map((l, i) => (
-                  <tr key={i} style={{ textAlign: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                    <td style={{ padding: '6px 0' }}>{l.date}</td>
-                    <td style={{ color: '#ff4d8d', fontWeight: 'bold' }}>{l.grip}kg</td>
-                    <td style={{ color: '#4caf50', fontWeight: 'bold' }}>{l.dumb}回</td>
+                  <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
+                    <td style={{ padding: '4px' }}>{l.date}</td><td>{l.grip}kg</td><td>{l.dumb}回</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
-
-        {/* 5. 自己ベスト（半透明） */}
-        <div style={{ background: 'rgba(0,0,0,0.6)', color: '#ffcc00', borderRadius: '20px', padding: '15px', backdropFilter: 'blur(4px)' }}>
-          <div style={{ textAlign: 'center', fontWeight: '900', marginBottom: '8px', fontSize: '14px' }}>🏆 自己ベスト</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', fontSize: '12px' }}>
-            {bestTimes.map((t, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0 10px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <span style={{ color: '#ccc' }}>{i + 1}位</span><span style={{ color: '#fff', fontWeight: 'bold' }}>{t}</span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
-      {/* 6. 固定入力フォーム（スマホ操作用） */}
-      <div style={{
-        position: 'fixed', bottom: 0, width: '100%', background: 'rgba(255,255,255,0.95)',
-        padding: '15px', borderTop: '5px solid #ff4d8d', zIndex: 100, borderRadius: '25px 25px 0 0',
-        boxShadow: '0 -5px 20px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <input type="number" placeholder="分" style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '2px solid #ddd', fontSize: '16px' }} />
-            <input type="number" placeholder="秒" style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '2px solid #ddd', fontSize: '16px' }} />
+      {/* --- 入力パネル：ここを使いやすく直しました --- */}
+      <div style={{ position: 'fixed', bottom: 0, width: '100%', background: 'white', padding: '15px', borderTop: '5px solid #ff4d8d', borderRadius: '30px 30px 0 0', boxShadow: '0 -5px 15px rgba(0,0,0,0.2)' }}>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '15px' }}>
+          {/* タイム入力 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#666' }}>⏱️ タイム</label>
+            <div style={{ display: 'flex', gap: '2px' }}>
+              <input type="number" value={inMin} onChange={e => setInMin(e.target.value)} placeholder="分" style={{ width: '100%', padding: '8px', border: '2px solid #ff4d8d', borderRadius: '8px' }} />
+              <input type="number" value={inSec} onChange={e => setInSec(e.target.value)} placeholder="秒" style={{ width: '100%', padding: '8px', border: '2px solid #ff4d8d', borderRadius: '8px' }} />
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <input type="number" value={inGrip} onChange={e => setInGrip(e.target.value)} placeholder="握力(kg)" style={{ flex: 1, padding: '10px', borderRadius: '12px', border: '2px solid #ddd' }} />
-            <input type="number" value={inDumb} onChange={e => setInDumb(e.target.value)} placeholder="ダンベル(回)" style={{ flex: 1, padding: '10px', borderRadius: '12px', border: '2px solid #ddd' }} />
+          {/* ダンベル入力 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#666' }}>💪 ダンベル</label>
+            <input type="number" value={inDumb} onChange={e => setInDumb(e.target.value)} placeholder="回数" style={{ padding: '8px', border: '2px solid #4caf50', borderRadius: '8px' }} />
           </div>
-          <button style={{
-            width: '100%', padding: '15px', background: 'linear-gradient(#ff4d8d, #ff1a75)', color: 'white',
-            border: 'none', borderRadius: '30px', fontWeight: '900', fontSize: '20px', boxShadow: '0 4px 0 #b30047'
-          }}>
-            きろく完了！
-          </button>
+          {/* 握力入力 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#666' }}>✊ 握力</label>
+            <input type="number" value={inGrip} onChange={e => setInGrip(e.target.value)} placeholder="kg" style={{ padding: '8px', border: '2px solid #2196f3', borderRadius: '8px' }} />
+          </div>
         </div>
+
+        <button 
+          onClick={() => { playSE(); alert("きろく完了にゃ！"); }}
+          style={{ width: '100%', padding: '18px', background: 'linear-gradient(#ff4d8d, #ff1a75)', color: 'white', border: 'none', borderRadius: '40px', fontWeight: 'bold', fontSize: '20px', boxShadow: '0 5px 0 #b30047' }}>
+          きろくする！
+        </button>
       </div>
 
       <style>{`
-        @keyframes characterJump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-30px); } }
-        .character-jump { display: inline-block; animation: characterJump 2s ease-in-out infinite; }
+        @keyframes jump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-25px); } }
+        .jump { display: inline-block; animation: jump 2s infinite; }
       `}</style>
     </main>
   );
