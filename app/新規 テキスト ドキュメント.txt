@@ -1,0 +1,5 @@
+デプロイ ID
+AKfycbwbXHFRRjF53XPE55sPv_ntNbDHw2YFi6xoLyLBXooieAMGqtoVjMC7JWA7Jkgappat
+ウェブアプリ
+URL
+https://script.google.com/macros/s/AKfycbwbXHFRRjF53XPE55sPv_ntNbDHw2YFi6xoLyLBXooieAMGqtoVjMC7JWA7Jkgappat/exec
