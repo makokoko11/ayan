@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 export default function GamePage() {
   const [click, setClick] = useState(0);
@@ -11,6 +11,10 @@ export default function GamePage() {
   const [msgText, setMsgText] = useState("");
   const [min, setMin] = useState("");
   const [sec, setSec] = useState("");
+  
+  // --- キャラクター選択用 ---
+  const characters = ["🐱", "🐶", "🐰", "🦊", "🐯", "🦁", "🐨", "🐼"];
+  const [selectedChar, setSelectedChar] = useState("🐱");
 
   const run = () => {
     if (isAnimating) return;
@@ -18,7 +22,7 @@ export default function GamePage() {
     const currentMin = min || "0";
     const currentSec = sec || "0";
     
-    setMsgText(`${currentMin}分${currentSec}秒！おいしいにゃー！`);
+    setMsgText(`${currentMin}分${currentSec}秒！${selectedChar}が喜んでるよ！`);
     setShowMsg(true);
     
     setIsAnimating(true);
@@ -34,7 +38,7 @@ export default function GamePage() {
     if (nextClick >= 3) {
       setTimeout(() => {
         setIsFlipped(true);
-        setMsgText("大満足だにゃーー！");
+        setMsgText("最高のごほうびだね！✨");
       }, 300);
 
       setTimeout(() => {
@@ -65,7 +69,7 @@ export default function GamePage() {
       WebkitFontSmoothing: 'antialiased',
       background: 'radial-gradient(circle at 50% 100%, rgba(58, 166, 85, 0.5) 0%, rgba(30, 80, 40, 0.9) 100%)',
     }}>
-      {/* 遠近感のあるトラック */}
+      {/* 背景トラック */}
       <div style={{
         position: 'absolute',
         top: '30%',
@@ -92,18 +96,53 @@ export default function GamePage() {
         background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ backgroundColor: '#FF4D4D', color: 'white', fontWeight: 800, fontSize: '12px', padding: '4px 8px', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>Lv. 5</div>
+          <div style={{ backgroundColor: '#FF4D4D', color: 'white', fontWeight: 800, fontSize: '12px', padding: '4px 8px', borderRadius: '6px', textTransform: 'uppercase' }}>Lv. 5</div>
           <div style={{ width: '140px', height: '8px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '4px', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: '75%', background: 'linear-gradient(90deg, #00C853 0%, #00E676 100%)' }} />
           </div>
         </div>
         <div style={{ textAlign: 'right', background: 'rgba(255, 255, 255, 0.1)', padding: '10px 15px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.2)', backdropFilter: 'blur(10px)' }}>
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)', letterSpacing: '1px' }}>BEST TIME</div>
+          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>BEST TIME</div>
           <div style={{ fontSize: '24px', fontWeight: 800 }}>2<span style={{ fontSize: '12px' }}>m</span> 41<span style={{ fontSize: '12px' }}>s</span></div>
         </div>
       </div>
 
-      {/* Cat Container */}
+      {/* Character Selector (追加された部分) */}
+      <div style={{
+        position: 'absolute',
+        top: '100px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        gap: '10px',
+        padding: '10px',
+        background: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: '20px',
+        backdropFilter: 'blur(5px)',
+        zIndex: 110,
+        maxWidth: '90%',
+        overflowX: 'auto',
+      }}>
+        {characters.map((char) => (
+          <div 
+            key={char}
+            onClick={() => setSelectedChar(char)}
+            style={{
+              fontSize: '30px',
+              padding: '10px',
+              cursor: 'pointer',
+              borderRadius: '15px',
+              backgroundColor: selectedChar === char ? 'rgba(255,255,255,0.2)' : 'transparent',
+              transition: 'background 0.2s',
+              flexShrink: 0,
+            }}
+          >
+            {char}
+          </div>
+        ))}
+      </div>
+
+      {/* Main Character Display */}
       <div style={{
         position: 'absolute',
         bottom: '35%',
@@ -121,7 +160,7 @@ export default function GamePage() {
           filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))',
           transform: isFlipped ? 'rotate(180deg)' : 'rotate(0)',
           transition: 'transform 0.3s',
-        }}>🐱</div>
+        }}>{selectedChar}</div>
         <div style={{
           width: '80px',
           height: '20px',
