@@ -1,96 +1,217 @@
-"use client";
-import { useState, useEffect } from 'react';
+'use client';
 
-// データの種類を定義（ここを追加しました）
-interface EventData {
-  id: string;
-  date: string;
-  day: string;
-  start: string;
-  end: string;
-  title: string;
-  momStatus: string;
-  assignment: string;
-}
+import React, { useState, useEffect } from 'react';
 
-export default function Home() {
-  const [events, setEvents] = useState<EventData[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function GamePage() {
+  const [click, setClick] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [isJumping, setIsJumping] = useState(false);
+  const [showMsg, setShowMsg] = useState(false);
+  const [msgText, setMsgText] = useState("");
+  const [min, setMin] = useState("");
+  const [sec, setSec] = useState("");
 
-  const gasUrl = "https://script.google.com/macros/s/AKfycbwbXHFRRjF53XPE55sPv_ntNbDHw2YFi6xoLyLBXooieAMGqtoVjMC7JWA7Jkgappat/exec"; 
+  const run = () => {
+    if (isAnimating) return;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(gasUrl);
-        const data = await res.json();
-        setEvents(data);
-        setLoading(false);
-      } catch (error) {
-        console.error("データ取得失敗:", error);
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+    const currentMin = min || "0";
+    const currentSec = sec || "0";
+    
+    setMsgText(`${currentMin}分${currentSec}秒！おいしいにゃー！`);
+    setShowMsg(true);
+    
+    setIsAnimating(true);
+    setIsJumping(true);
+    
+    setTimeout(() => {
+      setIsJumping(false);
+    }, 300);
 
-  // エラーが出ていた部分を修正（eventIdとnameに種類を明記しました）
-  const handleAssign = (eventId: string, name: string) => {
-    setEvents(prev => prev.map(ev => ev.id === eventId ? { ...ev, assignment: name } : ev));
+    const nextClick = click + 1;
+    setClick(nextClick);
+
+    if (nextClick >= 3) {
+      setTimeout(() => {
+        setIsFlipped(true);
+        setMsgText("大満足だにゃーー！");
+      }, 300);
+
+      setTimeout(() => {
+        setIsFlipped(false);
+        setClick(0);
+        setIsAnimating(false);
+        setShowMsg(false);
+      }, 1500);
+    } else {
+      setTimeout(() => {
+        setIsAnimating(false);
+        setShowMsg(false);
+      }, 1000);
+    }
   };
 
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-      <div className="animate-spin h-10 w-10 border-4 border-blue-600 rounded-full border-t-transparent mb-4"></div>
-      <p className="font-bold text-gray-500">データを読み込み中...</p>
-    </div>
-  );
-
   return (
-    <div className="max-w-md mx-auto bg-gray-50 min-h-screen pb-20 font-sans shadow-2xl text-gray-900">
-      <header className="bg-blue-800 text-white p-6 sticky top-0 z-10 text-center shadow-lg">
-        <h1 className="text-2xl font-black italic tracking-tighter">BEKKAI TRACK & FIELD</h1>
-        <p className="text-[10px] opacity-80 mt-1">お迎え管理システム</p>
-      </header>
+    <main style={{
+      width: '100vw',
+      height: '100vh',
+      margin: 0,
+      padding: 0,
+      fontFamily: "'Poppins', sans-serif",
+      overflow: 'hidden',
+      color: 'white',
+      backgroundColor: '#222',
+      position: 'relative',
+      WebkitFontSmoothing: 'antialiased',
+      background: 'radial-gradient(circle at 50% 100%, rgba(58, 166, 85, 0.5) 0%, rgba(30, 80, 40, 0.9) 100%)',
+    }}>
+      {/* 遠近感のあるトラック */}
+      <div style={{
+        position: 'absolute',
+        top: '30%',
+        left: '50%',
+        width: '200%',
+        height: '150%',
+        border: '12px solid rgba(255, 255, 255, 0.15)',
+        borderRadius: '50%',
+        transform: 'translateX(-50%) rotateX(60deg)',
+        boxShadow: '0 0 20px rgba(255, 255, 255, 0.1) inset',
+      }} />
 
-      <div className="p-4 space-y-4">
-        {events.map((ev) => (
-          <div key={ev.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className={`p-4 flex justify-between items-center ${ev.assignment !== "未定" ? 'bg-blue-50' : 'bg-white'}`}>
-              <div className="flex items-center gap-4">
-                <div className="bg-white px-3 py-2 rounded-xl border-2 border-blue-100 text-center min-w-[60px]">
-                  <div className="text-[10px] text-gray-400 font-bold">{ev.day}</div>
-                  <div className="text-xl font-black text-blue-900 leading-tight">{ev.date}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-black line-clamp-1">{ev.title}</div>
-                  <div className="text-[11px] font-bold text-gray-500 mt-1">🕒 {ev.start} 〜 {ev.end}</div>
-                </div>
-              </div>
-              <span className={`text-[10px] font-black px-2 py-1 rounded-md ${
-                ev.assignment === "ママ" ? "bg-red-500 text-white" :
-                ev.assignment === "パパ" ? "bg-blue-600 text-white" : 
-                ev.assignment === "自転車" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-400"
-              }`}>
-                {ev.assignment}
-              </span>
-            </div>
-
-            <div className="p-4 border-t border-gray-50">
-              {ev.momStatus && (
-                <div className="flex items-center gap-2 text-[11px] text-red-600 mb-4 bg-red-50 p-2.5 rounded-xl border border-red-100">
-                  <span className="font-bold">ママ勤務：{ev.momStatus}</span>
-                </div>
-              )}
-              <div className="grid grid-cols-3 gap-3">
-                <button onClick={() => handleAssign(ev.id, "パパ")} className={`py-3 rounded-xl text-xs font-black shadow-sm ${ev.assignment === "パパ" ? "bg-blue-600 text-white" : "bg-gray-50 text-blue-600 border border-blue-100"}`}>パパ</button>
-                <button onClick={() => handleAssign(ev.id, "ママ")} className={`py-3 rounded-xl text-xs font-black shadow-sm ${ev.assignment === "ママ" ? "bg-red-500 text-white" : "bg-gray-50 text-red-500 border border-red-100"}`}>ママ</button>
-                <button onClick={() => handleAssign(ev.id, "じい・ばば")} className="py-3 rounded-xl text-[10px] font-black border border-dashed border-gray-300 text-gray-400">じ・ば</button>
-              </div>
-            </div>
+      {/* HUD Header */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        padding: '20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        zIndex: 100,
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ backgroundColor: '#FF4D4D', color: 'white', fontWeight: 800, fontSize: '12px', padding: '4px 8px', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>Lv. 5</div>
+          <div style={{ width: '140px', height: '8px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '4px', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: '75%', background: 'linear-gradient(90deg, #00C853 0%, #00E676 100%)' }} />
           </div>
-        ))}
+        </div>
+        <div style={{ textAlign: 'right', background: 'rgba(255, 255, 255, 0.1)', padding: '10px 15px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.2)', backdropFilter: 'blur(10px)' }}>
+          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)', letterSpacing: '1px' }}>BEST TIME</div>
+          <div style={{ fontSize: '24px', fontWeight: 800 }}>2<span style={{ fontSize: '12px' }}>m</span> 41<span style={{ fontSize: '12px' }}>s</span></div>
+        </div>
       </div>
-    </div>
+
+      {/* Cat Container */}
+      <div style={{
+        position: 'absolute',
+        bottom: '35%',
+        left: '50%',
+        transform: `translateX(-50%) translateY(${isJumping ? '-50px' : '0'})`,
+        transition: 'transform 0.3s ease-out',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        zIndex: 10,
+      }}>
+        <div style={{
+          fontSize: '120px',
+          lineHeight: 1,
+          filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.5))',
+          transform: isFlipped ? 'rotate(180deg)' : 'rotate(0)',
+          transition: 'transform 0.3s',
+        }}>🐱</div>
+        <div style={{
+          width: '80px',
+          height: '20px',
+          background: 'rgba(0, 0, 0, 0.4)',
+          borderRadius: '50%',
+          filter: 'blur(5px)',
+          marginTop: '-10px',
+          transform: isJumping ? 'scale(0.7)' : 'scale(1)',
+          opacity: isJumping ? 0.5 : 1,
+          transition: 'transform 0.3s, opacity 0.3s',
+        }} />
+      </div>
+
+      {/* Message */}
+      <div style={{
+        position: 'absolute',
+        top: '45%',
+        left: '50%',
+        transform: 'translate(-50%, -100%)',
+        width: '80%',
+        textAlign: 'center',
+        opacity: showMsg ? 1 : 0,
+        transition: 'opacity 0.3s, transform 0.3s',
+        zIndex: 5,
+      }}>
+        <div style={{
+          fontSize: '28px',
+          fontWeight: 800,
+          background: 'linear-gradient(to bottom, #fff, #eee)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          textShadow: '0 4px 10px rgba(0,0,0,0.5)',
+        }}>{msgText}</div>
+      </div>
+
+      {/* Action Panel */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        width: '100%',
+        background: 'rgba(255, 255, 255, 0.1)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '24px 24px 0 0',
+        padding: '25px',
+        boxSizing: 'border-box',
+        zIndex: 100,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', background: 'rgba(0, 0, 0, 0.2)', padding: '5px 15px', borderRadius: '12px' }}>
+            <input 
+              type="number" 
+              value={min}
+              onChange={(e) => setMin(e.target.value)}
+              placeholder="00" 
+              style={{ width: '70px', background: 'transparent', border: 'none', color: 'white', fontSize: '40px', fontWeight: 800, textAlign: 'center', outline: 'none' }}
+            />
+            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>m</span>
+          </div>
+          <span style={{ fontSize: '30px', fontWeight: 800, color: 'rgba(255,255,255,0.5)' }}>:</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', background: 'rgba(0, 0, 0, 0.2)', padding: '5px 15px', borderRadius: '12px' }}>
+            <input 
+              type="number" 
+              value={sec}
+              onChange={(e) => setSec(e.target.value)}
+              placeholder="00" 
+              style={{ width: '70px', background: 'transparent', border: 'none', color: 'white', fontSize: '40px', fontWeight: 800, textAlign: 'center', outline: 'none' }}
+            />
+            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>s</span>
+          </div>
+        </div>
+        <button 
+          onClick={run}
+          style={{
+            width: '100%',
+            padding: '18px',
+            border: 'none',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #FF6B6B 0%, #FF4D4D 100%)',
+            color: 'white',
+            fontSize: '18px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 4px 15px rgba(255, 77, 77, 0.4)',
+          }}
+        >
+          RECORD TIME
+        </button>
+      </div>
+    </main>
   );
 }
